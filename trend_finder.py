@@ -104,7 +104,7 @@ class Historydf:
         # Iterate through the columns in chunks of {num_of_pretrend_days}
         for i in range(0, len(self.pretrends_df), self.num_of_pretrend_days):
             chunk_start = i
-            chunk_end = min(i + self.trend_length, total_columns)
+            chunk_end = min(i + self.num_of_pretrend_days, total_columns)
 
             # Get the chunk of columns
             chunk_open = open_prices.iloc[:, chunk_start:chunk_end]
@@ -134,19 +134,22 @@ class Historydf:
         
     def balance_downsample_df(self):
         df = self.structured_df
-
+    
         # Separate the data into two DataFrames based on the 'Buy/Sell' column
         df_majority = df[df['Buy/Sell'] == 0]
         df_minority = df[df['Buy/Sell'] == 1]
         
-        # Upsample the majority class
-        df_minority_downsampled = resample(df_minority,
-                                   replace=False,       # Sample without replacement
-                                   n_samples=len(df_majority),  # Match majority class size
-                                   random_state=42)     # For reproducibility
-
-        # Combine the downsampled minority class with the majority class
-        df_balanced = pd.concat([df_majority, df_minority_downsampled])
+        # Determine the size to downsample the minority class to
+        target_size = len(df_minority)
+        
+        # Downsample the majority class
+        df_majority_downsampled = resample(df_majority,
+                                            replace=False,
+                                            n_samples=target_size,  # Downsample to match minority size
+                                            random_state=42)
+    
+        # Combine the downsampled majority class with the minority class
+        df_balanced = pd.concat([df_majority_downsampled, df_minority])
         
         # Shuffle the rows of the balanced DataFrame for randomness (optional but recommended)
         df_balanced = df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)
@@ -154,6 +157,7 @@ class Historydf:
         # Now, df_balanced contains a balanced DataFrame with equal representation of both classes
         # The 'Buy/Sell' column will have roughly equal numbers
         self.balanced_df = df_balanced
+
         
     def balance_upsample_df(self):
         df = self.structured_df
@@ -183,13 +187,10 @@ def main():
     tesla = Historydf('TSLA', 30, 5, 20)
     tesla.find_trends()
     tesla.structure_data()
+    print(tesla.structured_df.value_counts('Buy/Sell'))
     tesla.balance_downsample_df()
-    print(tesla.balanced_df)
-    tesla.balance_upsample_df()
-    print(tesla.balanced_df)
+    print(tesla.balanced_df.value_counts('Buy/Sell'))
     
- 
-    #[print(i) for i in tesla.pretrends_df in range(0,20)]
 
         
 if __name__ == "__main__":
