@@ -34,7 +34,6 @@ class Historydf:
         self.num_of_pretrend_days = num_of_pretrend_days
         self.pretrends_df = pd.DataFrame()
         self.structured_df = pd.DataFrame()
-        self.balanced_df = pd.DataFrame()
         
         
     # Get df of entire given stock history. df contains dfs of [open, close, volume]

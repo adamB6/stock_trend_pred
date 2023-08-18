@@ -15,12 +15,12 @@ class logistic_regression:
     def __init__(self, name):
         self.name = name
         
-    def train_model(self, balanced_df):
-        selected_columns = [col for col in balanced_df.columns if col != 'Buy/Sell']
+    def train_model(self, structured_df):
+        selected_columns = [col for col in structured_df.columns if col != 'Buy/Sell']
         
-        X = balanced_df[selected_columns]
+        X = structured_df[selected_columns]
         
-        y = balanced_df['Buy/Sell']
+        y = structured_df['Buy/Sell']
         
         ros = RandomOverSampler(random_state=42)
         
