@@ -9,6 +9,7 @@ import pandas as pd
 import yfinance as yf
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.utils import resample
+from imblearn.under_sampling import RandomUnderSampler
 
 """
 A df of desired stock's history and it's attributes for modification
@@ -39,7 +40,7 @@ class Historydf:
     # Get df of entire given stock history. df contains dfs of [open, close, volume]
     def get_history_df(self, test):
         stock = yf.Ticker(test)
-        stock = pd.DataFrame(stock.history(period='5y'))
+        stock = pd.DataFrame(stock.history(period='3y'))
         stock.reset_index(drop=True)
         stock = stock[['Open', 'Close', 'Volume']]
         new_stock = stock.reset_index(drop=True)
@@ -131,67 +132,3 @@ class Historydf:
         
         # Store the structured and normalized dataframe
         self.structured_df = final_combined_df
-        
-    def balance_downsample_df(self):
-        df = self.structured_df
-    
-        # Separate the data into two DataFrames based on the 'Buy/Sell' column
-        df_majority = df[df['Buy/Sell'] == 0]
-        df_minority = df[df['Buy/Sell'] == 1]
-        
-        # Determine the size to downsample the minority class to
-        target_size = len(df_minority)
-        
-        # Downsample the majority class
-        df_majority_downsampled = resample(df_majority,
-                                            replace=False,
-                                            n_samples=target_size,  # Downsample to match minority size
-                                            random_state=42)
-    
-        # Combine the downsampled majority class with the minority class
-        df_balanced = pd.concat([df_majority_downsampled, df_minority])
-        
-        # Shuffle the rows of the balanced DataFrame for randomness (optional but recommended)
-        df_balanced = df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)
-        
-        # Now, df_balanced contains a balanced DataFrame with equal representation of both classes
-        # The 'Buy/Sell' column will have roughly equal numbers
-        self.balanced_df = df_balanced
-
-        
-    def balance_upsample_df(self):
-        df = self.structured_df
-    
-        # Separate the data into two DataFrames based on the 'Buy/Sell' column
-        df_majority = df[df['Buy/Sell'] == 0]
-        df_minority = df[df['Buy/Sell'] == 1]
-        
-        # Upsample the minority class
-        df_minority_upsampled = resample(df_minority,
-                                 replace=True,     # Sample with replacement
-                                 n_samples=len(df_majority),  # Match majority class size
-                                 random_state=42)
-        
-        # Combine the upsampled minority class with the majority class
-        df_balanced = pd.concat([df_majority, df_minority_upsampled])
-        
-        # Shuffle the rows of the balanced DataFrame (optional but recommended)
-        df_balanced = df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)        
-        # Now, df_balanced contains the balanced DataFrame with an equal representation of both classes
-        self.balanced_df = df_balanced
-
-        
-        
-    
-def main():
-    tesla = Historydf('TSLA', 30, 5, 20)
-    tesla.find_trends()
-    tesla.structure_data()
-    print(tesla.structured_df.value_counts('Buy/Sell'))
-    tesla.balance_downsample_df()
-    print(tesla.balanced_df.value_counts('Buy/Sell'))
-    
-
-        
-if __name__ == "__main__":
-    main()

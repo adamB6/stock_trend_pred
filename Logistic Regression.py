@@ -3,12 +3,13 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import yfinance as yf
 import trend_finder as tf
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics, svm
+from imblearn.over_sampling import RandomOverSampler
+
 
 class logistic_regression:
     def __init__(self, name):
@@ -21,7 +22,11 @@ class logistic_regression:
         
         y = balanced_df['Buy/Sell']
         
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+        ros = RandomOverSampler(random_state=42)
+        
+        X_resampled, y_resampled = ros.fit_resample(X, y)
+        
+        X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25)
         
         logmodel = LogisticRegression(solver='liblinear')
         logmodel.fit(X_train, y_train)
@@ -65,12 +70,11 @@ class logistic_regression:
         '''
 
 def main():
-    tesla = tf.Historydf('TSLA', 30, 5, 20)
+    tesla = tf.Historydf('TSLA', 30, 5, 60)
     tesla.find_trends()
     tesla.structure_data()
-    tesla.balance_downsample_df()
     tesla_lr = logistic_regression('Tesla')
-    tesla_lr.train_model(tesla.balanced_df)
+    tesla_lr.train_model(tesla.structured_df)
     
         
 if __name__ == "__main__":
