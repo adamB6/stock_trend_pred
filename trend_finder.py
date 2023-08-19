@@ -26,8 +26,9 @@ A df of desired stock's history and it's attributes for modification
     
 class Historydf:
 
-    def __init__(self, name, trend_length, percent_change, num_of_pretrend_days):
+    def __init__(self, name, history_length, trend_length, percent_change, num_of_pretrend_days):
         self.name = name
+        self.history_length = history_length
         self.df = self.get_history_df(self.name)
         self.trend_length = trend_length
         self.percent_change = percent_change
@@ -39,7 +40,7 @@ class Historydf:
     # Get df of entire given stock history. df contains dfs of [open, close, volume]
     def get_history_df(self, test):
         stock = yf.Ticker(test)
-        stock = pd.DataFrame(stock.history(period='3y'))
+        stock = pd.DataFrame(stock.history(period=self.history_length))
         stock.reset_index(drop=True)
         stock = stock[['Open', 'Close', 'Volume']]
         new_stock = stock.reset_index(drop=True)
