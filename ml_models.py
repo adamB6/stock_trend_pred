@@ -17,7 +17,7 @@ from imblearn.over_sampling import RandomOverSampler
 class one_vs_rest:
     def __init__(self, name):
         self.name = name
-        self.logmodel = LogisticRegression()
+        self.logmodel = OneVsRestClassifier(LogisticRegression())
         self.accuracy = 0
         
     def train_model(self, structured_df):
@@ -32,8 +32,7 @@ class one_vs_rest:
         X_resampled, y_resampled = ros.fit_resample(X, y)
         
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25)
-        print('test')
-        logmodel = OneVsRestClassifier(LogisticRegression(solver='lbfgs', max_iter=5000))
+        logmodel = OneVsRestClassifier(LogisticRegression(solver='sag', max_iter=5000))
         logmodel.fit(X_train, y_train)
         y_pred = logmodel.predict(X_test)
         
@@ -121,7 +120,7 @@ class logistic_regression:
     def get_current_prediction(self, stock):
         ## Get prediction at current date
         stock = yf.Ticker(f'{stock}')
-        stock = pd.DataFrame(stock.history(period='60d'))
+        stock = pd.DataFrame(stock.history(period='90d'))
         stock = stock[['Open', 'Close', 'Volume']]
         
         ## Pull the prices and normalize them
@@ -145,13 +144,16 @@ class logistic_regression:
         print(self.logmodel.predict(full_list_df))
 
 def main():
-    tesla = tf.Historydf('TSLA', '5y', 30, 5, 60)
+    tesla = tflr.Historydf('TSLA', '5y', 10, 5, 60)
     tesla.find_trends()
     tesla.structure_data()
-    tesla_lr = logistic_regression('Tesla')
-    tesla_lr.train_model(tesla.structured_df)
-    tesla_lr.save_current_model()
-    tesla_lr.get_current_prediction('TSLA')
+    tesla_lr = one_vs_rest('Tesla')
+    for i in range(0, 200):
+        tesla_lr.train_model(tesla.structured_df)
+        if tesla_lr.accuracy >= .57:
+            tesla_lr.save_current_model()
+    #tesla_lr.save_current_model()
+    #tesla_lr.get_current_prediction('TSLA')
 
     
     
