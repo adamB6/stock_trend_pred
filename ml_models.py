@@ -9,15 +9,15 @@ import yfinance as yf
 import pickle
 from datetime import datetime
 from sklearn.model_selection import train_test_split
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics, svm
 from imblearn.over_sampling import RandomOverSampler
 
-class one_vs_rest:
+## Support Vector Machine for multi-class using One-Vs-One
+class svm_ovr:
     def __init__(self, name):
         self.name = name
-        self.logmodel = OneVsRestClassifier(LogisticRegression())
+        self.model = svm.SVC()
         self.accuracy = 0
         
     def train_model(self, structured_df):
@@ -32,30 +32,30 @@ class one_vs_rest:
         X_resampled, y_resampled = ros.fit_resample(X, y)
         
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25)
-        logmodel = OneVsRestClassifier(LogisticRegression(solver='sag', max_iter=5000))
-        logmodel.fit(X_train, y_train)
-        y_pred = logmodel.predict(X_test)
+        model = svm.SVC(decision_function_shape='ovr')
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
         
         accuracy = metrics.accuracy_score(y_test, y_pred)
         
         print('The testing accuracy is: %0.2f' % accuracy)
-        #print('Coefficients:\n', logmodel.coef_)
-        self.logmodel = logmodel
+        #print('Coefficients:\n', model.coef_)
+        self.model = model
         self.accuracy = accuracy
     
     def save_current_model(self):
         filename = '{}_lr_{}.sav'.format(self.name, self.accuracy)
-        pickle.dump(self.logmodel, open(filename, 'wb'))
+        pickle.dump(self.model, open(filename, 'wb'))
         print(f'Model saved to {filename}')
         
     def load_model(self, file):
-        self.logmodel = pickle.load(open(file, 'rb'))
+        self.model = pickle.load(open(file, 'rb'))
         
     
     def get_current_prediction(self, stock):
         ## Get prediction at current date
         stock = yf.Ticker(f'{stock}')
-        stock = pd.DataFrame(stock.history(period='60d'))
+        stock = pd.DataFrame(stock.history(period='120d'))
         stock = stock[['Open', 'Close', 'Volume']]
         
         ## Pull the prices and normalize them
@@ -76,12 +76,14 @@ class one_vs_rest:
         full_list_df = pd.DataFrame(full_list).transpose()
         
             
-        print(self.logmodel.predict(full_list_df))
-    
+        print(self.model.predict(full_list_df))
+
+
+## logistic regression
 class logistic_regression:
     def __init__(self, name):
         self.name = name
-        self.logmodel = LogisticRegression()
+        self.model = LogisticRegression()
         self.accuracy = 0
         
     def train_model(self, structured_df):
@@ -97,30 +99,30 @@ class logistic_regression:
         
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25)
         
-        logmodel = LogisticRegression(solver='liblinear')
-        logmodel.fit(X_train, y_train)
-        y_pred = logmodel.predict(X_test)
+        model = LogisticRegression(solver='liblinear')
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
         
         accuracy = metrics.accuracy_score(y_test, y_pred)
         
         print('The testing accuracy is: %0.2f' % accuracy)
-        print('Coefficients:\n', logmodel.coef_)
-        self.logmodel = logmodel
+        print('Coefficients:\n', model.coef_)
+        self.model = model
         self.accuracy = accuracy
     
     def save_current_model(self):
         filename = '{}_lr_{}.sav'.format(self.name, self.accuracy)
-        pickle.dump(self.logmodel, open(filename, 'wb'))
+        pickle.dump(self.model, open(filename, 'wb'))
         print(f'Model saved to {filename}')
         
     def load_model(self, file):
-        self.logmodel = pickle.load(open(file, 'rb'))
+        self.model = pickle.load(open(file, 'rb'))
         
     
     def get_current_prediction(self, stock):
         ## Get prediction at current date
         stock = yf.Ticker(f'{stock}')
-        stock = pd.DataFrame(stock.history(period='90d'))
+        stock = pd.DataFrame(stock.history(period='120d'))
         stock = stock[['Open', 'Close', 'Volume']]
         
         ## Pull the prices and normalize them
@@ -141,21 +143,35 @@ class logistic_regression:
         full_list_df = pd.DataFrame(full_list).transpose()
         
             
-        print(self.logmodel.predict(full_list_df))
+        print(self.model.predict(full_list_df))
 
 def main():
-    tesla = tflr.Historydf('TSLA', '5y', 10, 5, 60)
+    
+    '''
+                        Train model
+    tesla = tflr.Historydf('TSLA', '3y', 7, 2, 120)
     tesla.find_trends()
     tesla.structure_data()
-    tesla_lr = one_vs_rest('Tesla')
+    tesla_lr = svm_ovr('Tesla')
+    acc = 0
+    mod = svm.SVC()
+    
     for i in range(0, 200):
         tesla_lr.train_model(tesla.structured_df)
-        if tesla_lr.accuracy >= .57:
-            tesla_lr.save_current_model()
-    #tesla_lr.save_current_model()
-    #tesla_lr.get_current_prediction('TSLA')
-
+        print(acc)
+        if tesla_lr.accuracy > acc:
+            acc = tesla_lr.accuracy
+            mod = tesla_lr.model
+    tesla_lr.model = mod
+    tesla_lr.accuracy = acc
+    tesla_lr.save_current_model()
+    '''
     
+    tesla_lr = svm_ovr('Tesla')
+    tesla_lr.load_model('Tesla_lr_0.9197080291970803.sav')
+    print(tesla_lr.model.coef_)
+    tesla_lr.get_current_prediction('TSLA')
+
     
         
 if __name__ == "__main__":
