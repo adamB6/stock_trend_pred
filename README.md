@@ -1,1 +1,1 @@
-# Stock Market Trend Predicter using logistic regression
+# Stock Market Predicter using SVM
