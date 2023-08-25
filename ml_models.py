@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 import trend_finder_lr as tflr
 import trend_finder_ovr as tfovr
@@ -11,7 +10,9 @@ from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics, svm
-from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import RandomOverSampler, SMOTE
+from collections import Counter
+from sklearn.preprocessing import LabelEncoder
 
 ## Support Vector Machine for multi-class using One-Vs-One
 class svm_ovr:
@@ -30,9 +31,9 @@ class svm_ovr:
         # Balance the data using RandomOverSampler
         ros = RandomOverSampler(random_state=42)
         X_resampled, y_resampled = ros.fit_resample(X, y)
-        
+        print(y_resampled.value_counts())
         X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.25)
-        model = svm.SVC(decision_function_shape='ovr')
+        model = svm.SVC(decision_function_shape='ovo')
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         
@@ -102,6 +103,7 @@ class logistic_regression:
         model = LogisticRegression(solver='liblinear')
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
+        print(y_test)
         
         accuracy = metrics.accuracy_score(y_test, y_pred)
         
@@ -147,32 +149,31 @@ class logistic_regression:
 
 def main():
     
-    '''
-                        Train model
-    tesla = tflr.Historydf('TSLA', '3y', 7, 2, 120)
+    
+                        ##Train model
+    tesla = tfovr.Historydf('TSLA', '1y', 10, 5, 120)
     tesla.find_trends()
     tesla.structure_data()
-    tesla_lr = svm_ovr('Tesla')
+    tesla_ovr = svm_ovr('Tesla')
     acc = 0
     mod = svm.SVC()
     
     for i in range(0, 200):
-        tesla_lr.train_model(tesla.structured_df)
+        tesla_ovr.train_model(tesla.structured_df)
         print(acc)
-        if tesla_lr.accuracy > acc:
-            acc = tesla_lr.accuracy
-            mod = tesla_lr.model
-    tesla_lr.model = mod
-    tesla_lr.accuracy = acc
-    tesla_lr.save_current_model()
+        if tesla_ovr.accuracy > acc:
+            acc = tesla_ovr.accuracy
+            mod = tesla_ovr.model
+    tesla_ovr.model = mod
+    tesla_ovr.accuracy = acc
+    tesla_ovr.save_current_model()
+    
     '''
+    tesla_ovr = svm_ovr('Tesla')
+    tesla_ovr.load_model('Tesla_lr_0.6590909090909091.sav')
+    tesla_ovr.get_current_prediction('TSLA')
     
-    tesla_lr = svm_ovr('Tesla')
-    tesla_lr.load_model('Tesla_lr_0.9197080291970803.sav')
-    print(tesla_lr.model.coef_)
-    tesla_lr.get_current_prediction('TSLA')
-
-    
+    '''
         
 if __name__ == "__main__":
     main()
