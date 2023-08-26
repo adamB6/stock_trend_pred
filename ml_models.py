@@ -149,9 +149,9 @@ class logistic_regression:
 
 def main():
     
-    
+    '''
                         ##Train model
-    tesla = tfovr.Historydf('TSLA', '1y', 10, 5, 120)
+    tesla = tfovr.Historydf('TSLA', 'MAX', 10, 10, 120)
     tesla.find_trends()
     tesla.structure_data()
     tesla_ovr = svm_ovr('Tesla')
@@ -173,7 +173,7 @@ def main():
     tesla_ovr.load_model('Tesla_lr_0.6590909090909091.sav')
     tesla_ovr.get_current_prediction('TSLA')
     
-    '''
+    
         
 if __name__ == "__main__":
     main()
