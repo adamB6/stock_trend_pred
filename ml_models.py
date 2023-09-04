@@ -5,7 +5,9 @@ import seaborn as sns
 import trend_finder_lr as tflr
 import trend_finder_ovr as tfovr
 import yfinance as yf
+import datetime
 import pickle
+import matplotlib.pyplot as plt
 from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -20,6 +22,8 @@ class svm_ovr:
         self.name = name
         self.model = svm.SVC()
         self.accuracy = 0
+        self.predictions = []
+        self.actual_labels = []
         
     def train_model(self, structured_df):
         selected_columns = [col for col in structured_df.columns if col != 'Buy/Sell']
@@ -58,7 +62,7 @@ class svm_ovr:
         stock = yf.Ticker(f'{stock}')
         stock = pd.DataFrame(stock.history(period='120d'))
         stock = stock[['Open', 'Close', 'Volume']]
-        
+        print(stock)
         ## Pull the prices and normalize them
         stock_prices = stock.Open.tolist() + stock.Close.tolist()
         price_min, price_max = min(stock_prices), max(stock_prices)
@@ -76,8 +80,13 @@ class svm_ovr:
         full_list = stock_prices + stock_volume
         full_list_df = pd.DataFrame(full_list).transpose()
         
-            
+        self.predictions.append(self.model.predict(full_list_df))
+        self.actual_labels.append(self.model.predict(full_list_df))
         print(self.model.predict(full_list_df))
+        
+    def save_results_to_csv(self, predictions, actual_labels, filename):
+        results_df = pd.DataFrame({'Predictions': predictions, 'Actual_Labels': actual_labels})
+        results_df.to_csv(filename, index=False)
 
 
 ## logistic regression
@@ -146,6 +155,23 @@ class logistic_regression:
         
             
         print(self.model.predict(full_list_df))
+        
+def plot_results(predictions, actual_labels):
+    plt.figure(figsize=(10, 6))
+    
+    # Plot predictions in blue
+    plt.plot(predictions, label='Predictions', marker='o', linestyle='-')
+    
+    # Plot actual labels in red
+    plt.plot(actual_labels, label='Actual Labels', marker='x', linestyle='--')
+    
+    plt.xlabel('Data Point')
+    plt.ylabel('Buy/Sell')
+    plt.title('Predictions vs. Actual Labels')
+    plt.legend()
+    plt.grid(True)
+    
+    plt.show()
 
 def main():
     
@@ -170,8 +196,16 @@ def main():
     
     '''
     tesla_ovr = svm_ovr('Tesla')
-    tesla_ovr.load_model('Tesla_lr_0.6590909090909091.sav')
+    tesla_ovr.load_model('Tesla_lr_0.8750769230769231.sav')
+    
+    
     tesla_ovr.get_current_prediction('TSLA')
+    
+    # Save results to CSV
+    tesla_ovr.save_results_to_csv(tesla_ovr.predictions, tesla_ovr.actual_labels, 'predictions.csv')
+   
+    # Plot results
+    plot_results(tesla_ovr.predictions, tesla_ovr.actual_labels)
     
     
         
