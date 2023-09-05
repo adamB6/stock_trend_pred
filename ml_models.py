@@ -202,10 +202,7 @@ def main():
     tesla_ovr.get_current_prediction('TSLA')
     
     # Save results to CSV
-    tesla_ovr.save_results_to_csv(tesla_ovr.predictions, tesla_ovr.actual_labels, 'predictions.csv')
-   
-    # Plot results
-    plot_results(tesla_ovr.predictions, tesla_ovr.actual_labels)
+    #plot_results(tesla_ovr.predictions, tesla_ovr.actual_labels)
     
     
         
